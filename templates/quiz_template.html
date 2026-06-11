@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{{TITLE}}</title>
+<style>
+:root{
+  --bg:#f7f9fc;--fg:#1a1a1a;--fg-soft:#5a5a5a;
+  --accent:#1565c0;--accent-light:#e3f2fd;--border:#d8e0e8;
+  --green:#00796b;--green-light:#c8e6c9;--red:#c62828;--red-light:#ffcdd2;
+  --yellow:#fff59d;--purple:#5e35b1;--card:#fff;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;font-family:"PingFang SC",-apple-system,BlinkMacSystemFont,"Helvetica Neue","Segoe UI",sans-serif;background:var(--bg);color:var(--fg);line-height:1.55}
+header{background:linear-gradient(135deg,#1565c0,#0097a7);color:#fff;padding:1.2em 1.5em;box-shadow:0 2px 6px rgba(0,0,0,.1);display:flex;justify-content:space-between;align-items:flex-start;gap:1em}
+header h1{margin:0 0 .3em;font-size:1.4em;font-weight:600}
+header .sub{font-size:.85em;opacity:.92}
+.lang-toggle{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.4);color:#fff;padding:5px 12px;border-radius:16px;cursor:pointer;font-size:.8em;flex-shrink:0;white-space:nowrap}
+.lang-toggle:hover{background:rgba(255,255,255,.3)}
+.container{max-width:900px;margin:0 auto;padding:1em 1.5em 4em}
+.filter-bar{display:flex;flex-wrap:wrap;gap:6px;margin:1em 0}
+.filter-btn{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:6px 12px;border-radius:18px;cursor:pointer;font-size:.85em;transition:.15s}
+.filter-btn:hover{border-color:var(--accent)}
+.filter-btn.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.filter-btn .count{opacity:.65;margin-left:4px}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:1em 0}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.7em;text-align:center}
+.stat .num{font-size:1.4em;font-weight:600;color:var(--accent)}
+.stat .label{font-size:.75em;color:var(--fg-soft)}
+.stat.correct .num{color:var(--green)}
+.stat.wrong .num{color:var(--red)}
+.qcard{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:1.5em;margin:1em 0;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.qmeta{display:flex;justify-content:space-between;align-items:center;font-size:.78em;color:var(--fg-soft);margin-bottom:.6em;gap:.5em;flex-wrap:wrap}
+.qbadge{display:inline-block;padding:2px 8px;border-radius:10px;font-weight:500;margin-right:6px}
+.qbadge.official{background:var(--accent-light);color:var(--accent)}
+.qbadge.practice{background:#f3e5f5;color:var(--purple)}
+.qbadge.module{background:#fff8e1;color:#f57f17}
+.qbadge.kind{background:#e0f2f1;color:#00695c}
+.qtext{font-size:1.05em;font-weight:500;margin:.5em 0 1em;white-space:pre-wrap}
+.qtext code,.feedback code{background:#f0f0f0;padding:1px 5px;border-radius:3px;font-family:"SF Mono",Consolas,monospace;font-size:.95em}
+.qtext pre{background:#f0f0f0;padding:.6em;border-radius:5px;font-family:"SF Mono",Consolas,monospace;font-size:.88em;overflow-x:auto;margin:.5em 0}
+.options{display:flex;flex-direction:column;gap:8px}
+.opt{background:#fafbfc;border:1.5px solid var(--border);border-radius:8px;padding:.7em 1em;cursor:pointer;transition:.15s;display:flex;align-items:flex-start;gap:.7em;text-align:left;font-family:inherit;font-size:.95em;color:var(--fg)}
+.opt:hover{border-color:var(--accent);background:var(--accent-light)}
+.opt .letter{font-weight:600;color:var(--accent);min-width:1.2em}
+.opt.picked{border-color:var(--accent);background:var(--accent-light)}
+.opt.correct{background:var(--green-light);border-color:var(--green);color:var(--green)}
+.opt.correct .letter{color:var(--green)}
+.opt.wrong{background:var(--red-light);border-color:var(--red);color:var(--red)}
+.opt.wrong .letter{color:var(--red)}
+.opt.disabled{cursor:default;opacity:.9}
+.opt.disabled:hover{background:#fafbfc;border-color:var(--border)}
+.opt.picked.disabled:hover{background:var(--accent-light);border-color:var(--accent)}
+.opt.correct.disabled,.opt.correct.disabled:hover{background:var(--green-light);border-color:var(--green)}
+.opt.wrong.disabled,.opt.wrong.disabled:hover{background:var(--red-light);border-color:var(--red)}
+.fill-input{width:100%;padding:.7em 1em;border:1.5px solid var(--border);border-radius:8px;font-family:inherit;font-size:1em;color:var(--fg)}
+.fill-input:focus{outline:none;border-color:var(--accent)}
+.fill-input.correct{border-color:var(--green);background:var(--green-light)}
+.fill-input.wrong{border-color:var(--red);background:var(--red-light)}
+.flash-back{margin-top:1em;padding:1em 1.2em;border:1.5px dashed var(--accent);border-radius:8px;background:var(--accent-light);font-size:1em;line-height:1.6}
+.submit-row{margin-top:1em;display:flex;gap:8px;flex-wrap:wrap}
+.btn{border:1px solid var(--border);background:var(--card);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.95em;color:var(--fg);font-family:inherit;transition:.15s}
+.btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.btn.ok:hover{background:var(--green);border-color:var(--green)}
+.btn.no:hover{background:var(--red);border-color:var(--red)}
+.feedback{margin-top:1em;padding:.9em 1.1em;border-radius:8px;display:none}
+.feedback.show{display:block}
+.feedback.right{background:var(--green-light);color:var(--green)}
+.feedback.bad{background:var(--red-light);color:var(--red)}
+.feedback .head{font-weight:600;margin-bottom:.4em}
+.feedback .body{color:var(--fg);font-size:.92em;line-height:1.6}
+.feedback .body code{background:rgba(0,0,0,.06)}
+.nav{display:flex;justify-content:space-between;align-items:center;margin:1em 0;gap:8px}
+.nav button{background:var(--card);border:1px solid var(--border);padding:8px 18px;border-radius:8px;cursor:pointer;font-size:.95em;color:var(--fg);transition:.15s}
+.nav button:hover:not(:disabled){background:var(--accent);color:#fff;border-color:var(--accent)}
+.nav button:disabled{opacity:.4;cursor:not-allowed}
+.nav .counter{font-size:.95em;color:var(--fg-soft)}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:1em;flex-wrap:wrap}
+.actions button{background:transparent;border:1px solid var(--border);padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.85em;color:var(--fg-soft)}
+.actions button:hover{background:#fafbfc;border-color:var(--accent);color:var(--accent)}
+.actions button.danger:hover{background:var(--red-light);border-color:var(--red);color:var(--red)}
+.actions button.primary{background:#fff8e1;border-color:#ffb74d;color:#e65100;font-weight:500}
+.actions button.primary:hover{background:#ffb74d;color:#fff}
+.empty{text-align:center;padding:3em 1em;color:var(--fg-soft)}
+.empty .big{font-size:2em;margin-bottom:.3em;color:var(--green)}
+.shortcut{font-size:.78em;color:var(--fg-soft);text-align:center;margin-top:1em}
+.shortcut kbd{background:#fff;border:1px solid var(--border);border-bottom-width:2px;border-radius:3px;padding:1px 5px;font-family:inherit;font-size:.92em}
+.banner{background:linear-gradient(90deg,#fff8e1,#ffe0b2);border:1px solid #ffb74d;border-radius:8px;padding:.8em 1.2em;margin:1em 0;display:flex;justify-content:space-between;align-items:center;gap:1em}
+.banner .b-title{font-weight:600;color:#e65100}
+.banner .b-meta{font-size:.85em;color:var(--fg-soft);margin-top:.2em}
+.banner button{background:#fff;border:1px solid #ffb74d;color:#e65100;padding:5px 14px;border-radius:6px;cursor:pointer;font-size:.85em;flex-shrink:0}
+.banner button:hover{background:#ffb74d;color:#fff}
+.snap-section{margin-top:2em;padding-top:1em;border-top:1px dashed var(--border)}
+.snap-section h2{font-size:1em;color:var(--accent);margin:0 0 .8em;font-weight:600}
+.snap-list{display:flex;flex-direction:column;gap:8px}
+.snap-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.8em 1em;transition:.15s}
+.snap-card:hover{border-color:var(--accent)}
+.snap-card.active{border-color:#ff9800;background:#fff8e1}
+.snap-row{display:flex;justify-content:space-between;align-items:center;gap:1em;flex-wrap:wrap}
+.snap-info{flex:1;min-width:0}
+.snap-name{font-weight:600;color:var(--fg);font-size:.95em}
+.snap-meta{font-size:.8em;color:var(--fg-soft);margin-top:.15em}
+.snap-progress{font-size:.8em;color:var(--fg-soft);margin-top:.2em}
+.snap-progress .ok{color:var(--green);font-weight:500}
+.snap-progress .bad{color:var(--red);font-weight:500}
+.snap-actions-row{display:flex;gap:6px;flex-shrink:0;flex-wrap:wrap}
+.snap-btn{background:transparent;border:1px solid var(--border);padding:4px 11px;border-radius:5px;cursor:pointer;font-size:.8em;color:var(--fg)}
+.snap-btn.open:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.snap-btn.redo:hover{background:#fff8e1;color:#e65100;border-color:#ffb74d}
+.snap-btn.del:hover{background:var(--red-light);color:var(--red);border-color:var(--red)}
+.snap-empty{text-align:center;padding:1.5em;color:var(--fg-soft);font-size:.88em;background:var(--card);border:1px dashed var(--border);border-radius:8px}
+@media (max-width:600px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .qcard{padding:1em}
+  header{flex-direction:column}
+  .banner{flex-direction:column;align-items:flex-start}
+  .snap-row{flex-direction:column;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1 id="hdr-title"></h1>
+    <div class="sub" id="hdr-sub"></div>
+  </div>
+  <button class="lang-toggle" id="lang-btn"></button>
+</header>
+<div class="container">
+  <div id="banner-area"></div>
+  <div class="filter-bar" id="filter-bar"></div>
+  <div class="stats" id="stats"></div>
+  <div id="quiz-area"></div>
+  <div class="actions">
+    <button id="save-snap-btn" class="primary"></button>
+    <button id="export-btn"></button>
+    <button id="reset-btn" class="danger"></button>
+  </div>
+  <div class="snap-section">
+    <h2 id="snap-title"></h2>
+    <div class="snap-list" id="snap-list"></div>
+  </div>
+  <div class="shortcut" id="shortcut-hint"></div>
+</div>
+<script>
+/* ============================================================
+ * CONFIG — edit for your quiz. Everything else is generic.
+ *   storageKey  : unique localStorage key. Bump the -vN suffix to wipe progress for all users.
+ *   defaultLang : "zh" | "en" — initial UI + content language (user can toggle, choice is saved).
+ *   title/subtitle : string OR {zh, en} for a bilingual header.
+ *   groups      : unit/topic filters, in order. `key` matches each question's `group`.
+ *                 `label` is a string OR {zh, en}.
+ * ============================================================ */
+const CONFIG = {
+  storageKey: "{{STORAGE_KEY}}",
+  defaultLang: "{{DEFAULT_LANG}}",   // "zh" or "en"
+  title: {{TITLE_JSON}},             // "..." or {zh:"...", en:"..."}
+  subtitle: {{SUBTITLE_JSON}},
+  groups: [
+    {{GROUPS}}                       // e.g. {key:"u1", label:{zh:"第1章",en:"Unit 1"}},
+  ],
+};
+
+/* ============================================================
+ * QUESTIONS — one object per question.
+ *
+ *  COMMON FIELDS (all kinds):
+ *    id          unique string, prefix by group (e.g. "u1-1")
+ *    group       must match a CONFIG.groups key
+ *    source      provenance for trust, e.g. "Ch.3 p.42" or "practice"
+ *    type        "official" (verbatim from source) | "practice" (newly written)
+ *    kind        "single" | "multi" | "tf" | "fill" | "flash"   (default "single")
+ *    question    stem; string OR {zh,en}; may contain inline HTML (<code>,<pre>,<strong>)
+ *    explanation why-right + why-distractors-wrong; string OR {zh,en}; inline HTML ok
+ *
+ *  PER-KIND FIELDS:
+ *    single / tf : options [str|{zh,en}, ...]   correct = index (0-based)
+ *                  (tf may omit options → defaults to True/False)
+ *    multi       : options [...]                correct = [idx, idx, ...]
+ *    fill        : answer  = "str"  OR  ["accepted","variants"]  (case/space-insensitive)
+ *    flash       : back    = answer side, string OR {zh,en}  (self-graded: 会 / 不会)
+ *
+ *  Text fields accept a plain string (shown in both languages) OR {zh,en}.
+ * ============================================================ */
+const QUESTIONS = [
+  {{QUESTIONS}}
+];
+
+// ===== i18n =====
+const I18N = {
+  zh:{langName:"EN",all:"全部",official:"官方例题",practice:"练习题",wrong:"错题本",
+      done:"已答",correct:"正确",wrongStat:"错误",rate:"正确率",
+      saveSnap:"保存当前错题为快照",exportWrong:"导出错题",resetMain:"重置主进度",
+      snapTitle:"📚 错题集快照",
+      shortcut:'快捷键：<kbd>1</kbd>–<kbd>5</kbd> 选项 · <kbd>Enter</kbd> 提交 · <kbd>←</kbd>/<kbd>→</kbd> 翻题',
+      prev:"← 上一题",next:"下一题 →",submit:"提交答案",showAns:"显示答案",iKnow:"我会了",iDont:"我不会",
+      kindSingle:"单选",kindMulti:"多选",kindTF:"判断",kindFill:"填空",kindFlash:"闪卡",
+      tfTrue:"正确",tfFalse:"错误",
+      gotIt:"✓ 答对了",missed:"✗ 答错了",correctAns:"正确答案：",yourAns:"你的答案：",
+      flashRecall:"自评：你刚才答出来了吗？",
+      noWrong:"当前题集没有错题。换个筛选或先答几题。",noMatch:"没有匹配的题目。",
+      bannerNow:"📌 正在练习错题集：",bannerCreated:"创建于",bannerQ:"题",bannerDone:"已答",bannerCorrect:"正确",
+      exitSnap:"返回完整题库",
+      snapEmpty:'还没有错题集快照。先答几题，再点上方"保存当前错题为快照"。',
+      snapCreated:"创建于",snapTotal:"共",snapQ:"题",snapDone:"已答",snapOk:"对",snapBad:"错",
+      snapOpen:"打开练习",snapOpened:"已打开",snapRedo:"重新做",snapDel:"删除",snapDoing:"（练习中）",
+      confirmRedo:n=>`重新做"${n}"？将清空这套错题集已记录的答题。`,
+      confirmDel:n=>`删除快照"${n}"？不可撤销。`,
+      confirmResetSnap:n=>`重置错题集"${n}"的答题记录？`,
+      confirmResetMain:"清空主进度的全部答题记录？已保存的错题集快照不受影响。",
+      noWrongToSnap:"当前没有错题，无法生成快照。先答错几道再来。",
+      snapNamePrompt:n=>`为这个错题集命名（${n} 道错题）：`,
+      snapDefault:n=>`错题集 ${new Date().toLocaleDateString()} (${n}题)`,
+      snapSaved:n=>`已保存"${n}"，可在下方"错题集快照"区域随时打开重做。`,
+      noWrongExport:"当前题集没有错题。",
+      exportHdr:(t,n)=>`${t} · 错题导出（共 ${n} 题）`,
+      exportSnapHdr:(t,s,n)=>`${t} · 错题集"${s}"导出（共 ${n} 题）`,
+      explLabel:"解析",pickPrompt:"（多选，选完点提交）"},
+  en:{langName:"中",all:"All",official:"From source",practice:"Practice",wrong:"Wrong",
+      done:"Done",correct:"Correct",wrongStat:"Wrong",rate:"Accuracy",
+      saveSnap:"Save wrong as set",exportWrong:"Export wrong",resetMain:"Reset progress",
+      snapTitle:"📚 Wrong-answer sets",
+      shortcut:'Keys: <kbd>1</kbd>–<kbd>5</kbd> pick · <kbd>Enter</kbd> submit · <kbd>←</kbd>/<kbd>→</kbd> move',
+      prev:"← Prev",next:"Next →",submit:"Submit",showAns:"Show answer",iKnow:"Got it",iDont:"Missed it",
+      kindSingle:"Single",kindMulti:"Multi",kindTF:"T/F",kindFill:"Fill",kindFlash:"Flashcard",
+      tfTrue:"True",tfFalse:"False",
+      gotIt:"✓ Correct",missed:"✗ Incorrect",correctAns:"Answer: ",yourAns:"Your answer: ",
+      flashRecall:"Self-rate: did you recall it?",
+      noWrong:"No wrong answers here. Change the filter or answer a few first.",noMatch:"No matching questions.",
+      bannerNow:"📌 Practicing wrong-set: ",bannerCreated:"created",bannerQ:"Q",bannerDone:"done",bannerCorrect:"correct",
+      exitSnap:"Back to full bank",
+      snapEmpty:'No saved sets yet. Answer a few, then click "Save wrong as set".',
+      snapCreated:"created",snapTotal:"",snapQ:"Q",snapDone:"done",snapOk:"ok",snapBad:"wrong",
+      snapOpen:"Open",snapOpened:"Opened",snapRedo:"Redo",snapDel:"Delete",snapDoing:"(active)",
+      confirmRedo:n=>`Redo "${n}"? This clears the recorded answers for this set.`,
+      confirmDel:n=>`Delete set "${n}"? Cannot be undone.`,
+      confirmResetSnap:n=>`Reset answers for set "${n}"?`,
+      confirmResetMain:"Clear all answers in the main progress? Saved sets are unaffected.",
+      noWrongToSnap:"No wrong answers to snapshot. Get a few wrong first.",
+      snapNamePrompt:n=>`Name this wrong-set (${n} questions):`,
+      snapDefault:n=>`Wrong set ${new Date().toLocaleDateString()} (${n})`,
+      snapSaved:n=>`Saved "${n}". Reopen it anytime from the sets section below.`,
+      noWrongExport:"No wrong answers here.",
+      exportHdr:(t,n)=>`${t} · Wrong answers export (${n})`,
+      exportSnapHdr:(t,s,n)=>`${t} · Set "${s}" export (${n})`,
+      explLabel:"Explanation",pickPrompt:"(multi-select, then submit)"},
+};
+
+// ===== Storage =====
+const STORAGE_KEY = CONFIG.storageKey;
+function loadState(){try{return JSON.parse(localStorage.getItem(STORAGE_KEY))||{}}catch(e){return{}}}
+function saveState(s){localStorage.setItem(STORAGE_KEY,JSON.stringify(s))}
+
+let state = loadState();
+// state: {lang, answers:{qid:value}, currentIdx, filter,
+//         snapshots:[{id,name,time,qids:[],answers:{}}], activeSnapshot:id|null}
+//   answer value by kind: single/tf -> int | multi -> sorted int[] | fill -> string | flash -> "known"|"unknown"
+state.lang = state.lang || CONFIG.defaultLang || "zh";
+state.answers = state.answers || {};
+state.currentIdx = state.currentIdx || 0;
+state.filter = state.filter || 'all';
+state.snapshots = state.snapshots || [];
+state.activeSnapshot = state.activeSnapshot || null;
+
+// ephemeral, session-only working answers for multi (not persisted until submit)
+const draft = {};
+
+// ===== language helpers =====
+function L(){return I18N[state.lang]}
+function t(v){ // resolve string-or-{zh,en}
+  if(v==null) return '';
+  if(typeof v==='object') return v[state.lang] ?? v.zh ?? v.en ?? '';
+  return v;
+}
+function tOpts(q){ // option list, with TF default
+  if(q.options && q.options.length) return q.options;
+  if(kindOf(q)==='tf') return [L().tfTrue, L().tfFalse];
+  return [];
+}
+function kindOf(q){return q.kind || 'single'}
+
+// ===== Snapshot helpers (wrong-answer sets) =====
+function getActiveSnap(){return state.activeSnapshot?state.snapshots.find(s=>s.id===state.activeSnapshot):null}
+function getCurrentAnswers(){const s=getActiveSnap();return s?s.answers:state.answers}
+function setAnswer(qid,val){const s=getActiveSnap();if(s)s.answers[qid]=val;else state.answers[qid]=val;saveState(state)}
+function getActivePool(){const s=getActiveSnap();return s?QUESTIONS.filter(q=>s.qids.includes(q.id)):QUESTIONS}
+
+// ===== grading =====
+function norm(s){return String(s).trim().toLowerCase().replace(/\s+/g,' ')}
+function isCorrect(q,a){
+  if(a===undefined) return false;
+  const k=kindOf(q);
+  if(k==='single'||k==='tf') return a===q.correct;
+  if(k==='multi'){const c=[...q.correct].sort((x,y)=>x-y);const u=[...a].sort((x,y)=>x-y);return c.length===u.length&&c.every((v,i)=>v===u[i]);}
+  if(k==='fill'){const acc=Array.isArray(q.answer)?q.answer:[q.answer];return acc.some(x=>norm(x)===norm(a));}
+  if(k==='flash') return a==='known';
+  return false;
+}
+function isAnswered(q,ans){return ans[q.id]!==undefined}
+function isWrong(q,ans){return isAnswered(q,ans) && !isCorrect(q,ans[q.id])}
+
+// ===== Filtering =====
+function groupLabel(key){const g=CONFIG.groups.find(g=>g.key===key);return g?t(g.label):key}
+function filterChips(){
+  return [{key:'all',label:L().all},
+    ...CONFIG.groups.map(g=>({key:g.key,label:t(g.label)})),
+    {key:'official',label:L().official},{key:'practice',label:L().practice},{key:'wrong',label:L().wrong}];
+}
+function filterQuestions(){
+  const pool=getActivePool(),ans=getCurrentAnswers(),f=state.filter;
+  if(f==='all')return pool;
+  if(f==='wrong')return pool.filter(q=>isWrong(q,ans));
+  if(f==='official'||f==='practice')return pool.filter(q=>q.type===f);
+  return pool.filter(q=>q.group===f);
+}
+function countFor(f){
+  const pool=getActivePool(),ans=getCurrentAnswers();
+  if(f==='all')return pool.length;
+  if(f==='wrong')return pool.filter(q=>isWrong(q,ans)).length;
+  if(f==='official'||f==='practice')return pool.filter(q=>q.type===f).length;
+  return pool.filter(q=>q.group===f).length;
+}
+
+// ===== Rendering =====
+function renderChrome(){
+  document.documentElement.lang = state.lang==='zh'?'zh-CN':'en';
+  document.getElementById('hdr-title').textContent = t(CONFIG.title);
+  document.getElementById('hdr-sub').innerHTML = t(CONFIG.subtitle);
+  document.getElementById('lang-btn').textContent = L().langName;
+  document.getElementById('save-snap-btn').textContent = L().saveSnap;
+  document.getElementById('export-btn').textContent = L().exportWrong;
+  document.getElementById('reset-btn').textContent = L().resetMain;
+  document.getElementById('snap-title').textContent = L().snapTitle;
+  document.getElementById('shortcut-hint').innerHTML = L().shortcut;
+}
+function renderFilters(){
+  const bar=document.getElementById('filter-bar');
+  bar.innerHTML=filterChips().map(m=>{
+    const c=countFor(m.key),active=state.filter===m.key?' active':'';
+    return `<button class="filter-btn${active}" data-filter="${m.key}">${m.label}<span class="count">(${c})</span></button>`;
+  }).join('');
+  bar.querySelectorAll('.filter-btn').forEach(btn=>btn.addEventListener('click',()=>{
+    state.filter=btn.dataset.filter;state.currentIdx=0;saveState(state);renderAll();
+  }));
+}
+function renderStats(){
+  const pool=getActivePool(),ans=getCurrentAnswers(),total=pool.length;
+  const answered=pool.filter(q=>isAnswered(q,ans)).length;
+  const correct=pool.filter(q=>isAnswered(q,ans)&&isCorrect(q,ans[q.id])).length;
+  const wrong=answered-correct;
+  document.getElementById('stats').innerHTML=`
+    <div class="stat"><div class="num">${answered}</div><div class="label">${L().done} / ${total}</div></div>
+    <div class="stat correct"><div class="num">${correct}</div><div class="label">${L().correct}</div></div>
+    <div class="stat wrong"><div class="num">${wrong}</div><div class="label">${L().wrongStat}</div></div>
+    <div class="stat"><div class="num">${Math.round(correct/Math.max(answered,1)*100)}%</div><div class="label">${L().rate}</div></div>`;
+}
+function renderBanner(){
+  const snap=getActiveSnap(),area=document.getElementById('banner-area');
+  if(!snap){area.innerHTML='';return}
+  const total=snap.qids.length,answered=Object.keys(snap.answers).length;
+  const correct=Object.entries(snap.answers).filter(([id,a])=>{const q=QUESTIONS.find(q=>q.id===id);return q&&isCorrect(q,a)}).length;
+  area.innerHTML=`<div class="banner"><div>
+      <div class="b-title">${L().bannerNow}${snap.name}</div>
+      <div class="b-meta">${L().bannerCreated} ${snap.time} · ${total} ${L().bannerQ} · ${L().bannerDone} ${answered}, ${L().bannerCorrect} ${correct}</div>
+    </div><button id="exit-snap-btn">${L().exitSnap}</button></div>`;
+  document.getElementById('exit-snap-btn').addEventListener('click',()=>{
+    state.activeSnapshot=null;state.currentIdx=0;state.filter='all';saveState(state);renderAll();
+  });
+}
+function kindLabel(k){return{single:L().kindSingle,multi:L().kindMulti,tf:L().kindTF,fill:L().kindFill,flash:L().kindFlash}[k]||k}
+
+function renderQuiz(){
+  const list=filterQuestions(),ans=getCurrentAnswers(),area=document.getElementById('quiz-area');
+  if(list.length===0){
+    area.innerHTML=state.filter==='wrong'
+      ?`<div class="empty"><div class="big">✓</div>${L().noWrong}</div>`
+      :`<div class="empty">${L().noMatch}</div>`;
+    return;
+  }
+  if(state.currentIdx>=list.length)state.currentIdx=0;
+  const q=list[state.currentIdx], k=kindOf(q), answered=isAnswered(q,ans);
+  const typeLabel=q.type==='official'?L().official:L().practice;
+
+  let body='';
+  if(k==='single'||k==='tf'){
+    body='<div class="options">'+tOpts(q).map((opt,i)=>{
+      let cls='opt';
+      if(answered){cls+=' disabled';if(i===q.correct)cls+=' correct';else if(i===ans[q.id])cls+=' wrong';}
+      return `<button class="${cls}" data-idx="${i}"><span class="letter">${String.fromCharCode(65+i)}.</span><span>${t(opt)}</span></button>`;
+    }).join('')+'</div>';
+  } else if(k==='multi'){
+    const picks=answered?ans[q.id]:(draft[q.id]||[]);
+    body='<div class="options">'+tOpts(q).map((opt,i)=>{
+      let cls='opt';
+      if(answered){cls+=' disabled';
+        if(q.correct.includes(i))cls+=' correct';
+        else if(picks.includes(i))cls+=' wrong';
+      } else if(picks.includes(i)) cls+=' picked';
+      const mark=picks.includes(i)?'☑':'☐';
+      return `<button class="${cls}" data-idx="${i}"><span class="letter">${mark}</span><span>${t(opt)}</span></button>`;
+    }).join('')+'</div>';
+    if(!answered) body+=`<div class="submit-row"><button class="btn primary" id="submit-btn">${L().submit}</button><span style="align-self:center;font-size:.82em;color:var(--fg-soft)">${L().pickPrompt}</span></div>`;
+  } else if(k==='fill'){
+    const val=answered?ans[q.id]:'';
+    let icls='fill-input';
+    if(answered) icls+=isCorrect(q,ans[q.id])?' correct':' wrong';
+    body=`<input class="${icls}" id="fill-input" ${answered?'disabled':''} value="${String(val).replace(/"/g,'&quot;')}" placeholder="…">`;
+    if(!answered) body+=`<div class="submit-row"><button class="btn primary" id="submit-btn">${L().submit}</button></div>`;
+  } else if(k==='flash'){
+    const revealed = answered || draft['flip-'+q.id];
+    if(revealed){
+      body=`<div class="flash-back">${t(q.back)}</div>`;
+      if(!answered) body+=`<div class="submit-row"><span style="align-self:center;font-size:.85em;color:var(--fg-soft)">${L().flashRecall}</span><button class="btn ok" id="flash-known">${L().iKnow}</button><button class="btn no" id="flash-unknown">${L().iDont}</button></div>`;
+    } else {
+      body=`<div class="submit-row"><button class="btn primary" id="flash-show">${L().showAns}</button></div>`;
+    }
+  }
+
+  let feedback='';
+  if(answered){
+    const right=isCorrect(q,ans[q.id]);
+    let head=right?L().gotIt:L().missed;
+    if(!right && (k==='single'||k==='tf')) head+=' · '+L().correctAns+String.fromCharCode(65+q.correct);
+    if(!right && k==='multi') head+=' · '+L().correctAns+q.correct.map(i=>String.fromCharCode(65+i)).join(' ');
+    if(k==='fill'){const acc=Array.isArray(q.answer)?q.answer.join(' / '):q.answer;head+=' · '+L().correctAns+acc;}
+    feedback=`<div class="feedback show ${right?'right':'bad'}">
+      <div class="head">${head}</div>
+      ${t(q.explanation)?`<div class="body">${t(q.explanation)}</div>`:''}</div>`;
+  }
+
+  area.innerHTML=`<div class="qcard">
+      <div class="qmeta"><div>
+        <span class="qbadge module">${groupLabel(q.group)}</span>
+        <span class="qbadge ${q.type}">${typeLabel}</span>
+        <span class="qbadge kind">${kindLabel(k)}</span>
+        <span>${q.source||''}</span>
+      </div><div>${q.id}</div></div>
+      <div class="qtext">${t(q.question)}</div>
+      ${body}
+      ${feedback}
+    </div>
+    <div class="nav">
+      <button id="prev-btn" ${state.currentIdx===0?'disabled':''}>${L().prev}</button>
+      <span class="counter">${state.currentIdx+1} / ${list.length}</span>
+      <button id="next-btn" ${state.currentIdx===list.length-1?'disabled':''}>${L().next}</button>
+    </div>`;
+
+  // wire interactions
+  if(k==='single'||k==='tf'){
+    if(!answered) area.querySelectorAll('.opt').forEach(btn=>btn.addEventListener('click',()=>{
+      setAnswer(q.id,parseInt(btn.dataset.idx));renderAll();
+    }));
+  } else if(k==='multi'){
+    if(!answered){
+      area.querySelectorAll('.opt').forEach(btn=>btn.addEventListener('click',()=>{
+        const i=parseInt(btn.dataset.idx);const cur=draft[q.id]||[];
+        draft[q.id]=cur.includes(i)?cur.filter(x=>x!==i):[...cur,i];renderQuiz();
+      }));
+      const sb=document.getElementById('submit-btn');
+      if(sb) sb.addEventListener('click',()=>{setAnswer(q.id,[...(draft[q.id]||[])].sort((a,b)=>a-b));delete draft[q.id];renderAll();});
+    }
+  } else if(k==='fill'){
+    if(!answered){
+      const sb=document.getElementById('submit-btn'),inp=document.getElementById('fill-input');
+      const go=()=>{const v=(inp.value||'').trim();if(!v)return;setAnswer(q.id,v);renderAll();};
+      if(sb) sb.addEventListener('click',go);
+      if(inp){inp.focus();inp.addEventListener('keydown',e=>{if(e.key==='Enter')go();});}
+    }
+  } else if(k==='flash'){
+    if(!answered){
+      const show=document.getElementById('flash-show');
+      if(show) show.addEventListener('click',()=>{draft['flip-'+q.id]=true;renderQuiz();});
+      const yk=document.getElementById('flash-known'),nk=document.getElementById('flash-unknown');
+      if(yk) yk.addEventListener('click',()=>{delete draft['flip-'+q.id];setAnswer(q.id,'known');renderAll();});
+      if(nk) nk.addEventListener('click',()=>{delete draft['flip-'+q.id];setAnswer(q.id,'unknown');renderAll();});
+    }
+  }
+  const prev=document.getElementById('prev-btn'),next=document.getElementById('next-btn');
+  if(prev)prev.addEventListener('click',()=>{state.currentIdx--;saveState(state);renderQuiz();});
+  if(next)next.addEventListener('click',()=>{state.currentIdx++;saveState(state);renderQuiz();});
+}
+
+function renderSnapshots(){
+  const list=document.getElementById('snap-list');
+  if(state.snapshots.length===0){list.innerHTML=`<div class="snap-empty">${L().snapEmpty}</div>`;return}
+  list.innerHTML=state.snapshots.map(snap=>{
+    const total=snap.qids.length,answered=Object.keys(snap.answers).length;
+    const correct=Object.entries(snap.answers).filter(([id,a])=>{const q=QUESTIONS.find(q=>q.id===id);return q&&isCorrect(q,a)}).length;
+    const wrong=answered-correct,isActive=state.activeSnapshot===snap.id;
+    return `<div class="snap-card${isActive?' active':''}"><div class="snap-row">
+      <div class="snap-info">
+        <div class="snap-name">${snap.name}${isActive?' '+L().snapDoing:''}</div>
+        <div class="snap-meta">${L().snapCreated} ${snap.time} · ${L().snapTotal} ${total} ${L().snapQ}</div>
+        <div class="snap-progress">${L().snapDone} ${answered}/${total} · <span class="ok">${L().snapOk} ${correct}</span> · <span class="bad">${L().snapBad} ${wrong}</span></div>
+      </div>
+      <div class="snap-actions-row">
+        <button class="snap-btn open" data-id="${snap.id}">${isActive?L().snapOpened:L().snapOpen}</button>
+        <button class="snap-btn redo" data-id="${snap.id}">${L().snapRedo}</button>
+        <button class="snap-btn del" data-id="${snap.id}">${L().snapDel}</button>
+      </div></div></div>`;
+  }).join('');
+  list.querySelectorAll('.snap-btn.open').forEach(b=>b.addEventListener('click',()=>{
+    state.activeSnapshot=b.dataset.id;state.currentIdx=0;state.filter='all';saveState(state);renderAll();window.scrollTo({top:0,behavior:'smooth'});
+  }));
+  list.querySelectorAll('.snap-btn.redo').forEach(b=>b.addEventListener('click',()=>{
+    const snap=state.snapshots.find(s=>s.id===b.dataset.id);if(!snap)return;
+    if(confirm(L().confirmRedo(snap.name))){snap.answers={};state.activeSnapshot=snap.id;state.currentIdx=0;state.filter='all';saveState(state);renderAll();window.scrollTo({top:0,behavior:'smooth'});}
+  }));
+  list.querySelectorAll('.snap-btn.del').forEach(b=>b.addEventListener('click',()=>{
+    const snap=state.snapshots.find(s=>s.id===b.dataset.id);if(!snap)return;
+    if(confirm(L().confirmDel(snap.name))){state.snapshots=state.snapshots.filter(s=>s.id!==b.dataset.id);if(state.activeSnapshot===b.dataset.id)state.activeSnapshot=null;saveState(state);renderAll();}
+  }));
+}
+
+function renderAll(){renderChrome();renderBanner();renderFilters();renderStats();renderQuiz();renderSnapshots();}
+
+// ===== Buttons =====
+document.getElementById('lang-btn').addEventListener('click',()=>{
+  state.lang = state.lang==='zh'?'en':'zh';saveState(state);renderAll();
+});
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  const snap=getActiveSnap();
+  if(snap){if(confirm(L().confirmResetSnap(snap.name))){snap.answers={};state.currentIdx=0;saveState(state);renderAll();}return;}
+  if(confirm(L().confirmResetMain)){state.answers={};state.currentIdx=0;state.filter='all';saveState(state);renderAll();}
+});
+document.getElementById('save-snap-btn').addEventListener('click',()=>{
+  const ans=getCurrentAnswers(),pool=getActivePool();
+  const wrongQs=pool.filter(q=>isWrong(q,ans));
+  if(wrongQs.length===0){alert(L().noWrongToSnap);return;}
+  const name=prompt(L().snapNamePrompt(wrongQs.length),L().snapDefault(wrongQs.length));
+  if(!name)return;
+  state.snapshots.unshift({id:'snap-'+Date.now(),name:name.trim(),
+    time:new Date().toLocaleString(state.lang==='zh'?'zh-CN':'en-US',{year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'}),
+    qids:wrongQs.map(q=>q.id),answers:{}});
+  saveState(state);renderAll();alert(L().snapSaved(name));
+});
+document.getElementById('export-btn').addEventListener('click',()=>{
+  const ans=getCurrentAnswers(),pool=getActivePool();
+  const wrong=pool.filter(q=>isWrong(q,ans));
+  if(wrong.length===0){alert(L().noWrongExport);return;}
+  const snap=getActiveSnap(),title=t(CONFIG.title);
+  let txt=(snap?L().exportSnapHdr(title,snap.name,wrong.length):L().exportHdr(title,wrong.length))+'\n\n';
+  wrong.forEach((q,i)=>{
+    const k=kindOf(q),a=ans[q.id];
+    txt+=`${i+1}. [${q.id}] ${t(q.question).replace(/<[^>]+>/g,'')}\n`;
+    if(k==='single'||k==='tf'||k==='multi'){
+      const correctSet=k==='multi'?q.correct:[q.correct];
+      const mine=k==='multi'?a:[a];
+      tOpts(q).forEach((opt,j)=>{txt+=`   ${correctSet.includes(j)?'✓':mine.includes(j)?'✗':' '} ${String.fromCharCode(65+j)}. ${t(opt).replace(/<[^>]+>/g,'')}\n`;});
+    } else if(k==='fill'){
+      const acc=Array.isArray(q.answer)?q.answer.join(' / '):q.answer;
+      txt+=`   ${L().correctAns}${acc}\n   ${L().yourAns}${a}\n`;
+    } else if(k==='flash'){
+      txt+=`   ${L().correctAns}${t(q.back).replace(/<[^>]+>/g,'')}\n`;
+    }
+    if(t(q.explanation)) txt+=`   ${L().explLabel}: ${t(q.explanation).replace(/<[^>]+>/g,'')}\n`;
+    txt+='\n';
+  });
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'}),url=URL.createObjectURL(blob);
+  const a=document.createElement('a');a.href=url;a.download=`wrong_questions_${Date.now()}.txt`;a.click();URL.revokeObjectURL(url);
+});
+
+// ===== Keyboard =====
+document.addEventListener('keydown',e=>{
+  const tag=(e.target.tagName||'').toLowerCase();
+  if(tag==='input'||tag==='textarea'){if(e.key==='Enter')return; else if(e.key!=='ArrowLeft'&&e.key!=='ArrowRight')return;}
+  const list=filterQuestions();if(list.length===0)return;
+  const q=list[state.currentIdx],k=kindOf(q),ans=getCurrentAnswers();
+  if(e.key==='ArrowLeft'&&state.currentIdx>0){state.currentIdx--;saveState(state);renderQuiz();return;}
+  if(e.key==='ArrowRight'&&state.currentIdx<list.length-1){state.currentIdx++;saveState(state);renderQuiz();return;}
+  if(isAnswered(q,ans))return;
+  if(['1','2','3','4','5'].includes(e.key)){
+    const idx=parseInt(e.key)-1;
+    if(k==='single'||k==='tf'){if(idx<tOpts(q).length){setAnswer(q.id,idx);renderAll();}}
+    else if(k==='multi'){if(idx<tOpts(q).length){const cur=draft[q.id]||[];draft[q.id]=cur.includes(idx)?cur.filter(x=>x!==idx):[...cur,idx];renderQuiz();}}
+  } else if(e.key==='Enter'){
+    if(k==='multi'){setAnswer(q.id,[...(draft[q.id]||[])].sort((a,b)=>a-b));delete draft[q.id];renderAll();}
+    else if(k==='flash'){if(draft['flip-'+q.id]){/* wait for self-rate */}else{draft['flip-'+q.id]=true;renderQuiz();}}
+  }
+});
+
+renderAll();
+</script>
+</body>
+</html>

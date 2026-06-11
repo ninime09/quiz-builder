@@ -1,0 +1,6 @@
+.DS_Store
+__pycache__/
+*.pyc
+# intermediate artifacts produced while building a quiz
+_module_text/
+*_dedup.pdf
