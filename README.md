@@ -1,5 +1,7 @@
 # quiz-builder
 
+![quiz-builder demo — pick an option and it grades instantly with an explanation](assets/demo.gif)
+
 Turn any study material into a **single-file, offline, reusable HTML quiz** —
 5 question types, instant grading + explanations, a built-in wrong-answer
 notebook, local progress saving, and one-click **中 / EN** switching.
